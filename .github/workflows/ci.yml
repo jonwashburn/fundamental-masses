@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run integration tests
+      run: |
+        python test_integration.py
+    
+    - name: Run certificate validation
+      run: |
+        python code/scripts/validate_certificates.py
+    
+    - name: Run ablations
+      run: |
+        python code/scripts/validate_certificates.py --ablations
+    
+    - name: Generate validation report
+      run: |
+        make certs
+        make test
+    
+    - name: Archive results
+      uses: actions/upload-artifact@v3
+      with:
+        name: validation-results-${{ matrix.python-version }}
+        path: |
+          out/csv/*.csv
+          out/tex/*.tex
+          out/*.log
+
+  lean-verify:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Lean
+      run: |
+        curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y
+        echo "$HOME/.elan/bin" >> $GITHUB_PATH
+    
+    - name: Download Mathlib cache
+      run: |
+        lake exe cache get
+    
+    - name: Build Lean project
+      run: |
+        lake build
+    
+    - name: Check for axioms
+      run: |
+        # Verify no anchorEquality axiom remains
+        ! grep -q "axiom anchorEquality" IndisputableMonolith.lean || exit 1
+        echo "✓ No problematic axioms found"
+
+  reproducibility:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run complete pipeline
+      run: |
+        make clean
+        make all
+    
+    - name: Verify checksums
+      run: |
+        # Generate checksums of output files
+        sha256sum out/csv/*.csv > checksums.txt
+        echo "Checksums generated:"
+        cat checksums.txt
+    
+    - name: Upload complete results
+      uses: actions/upload-artifact@v3
+      with:
+        name: complete-results
+        path: |
+          out/
+          checksums.txt

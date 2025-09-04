@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+.ipynb_checkpoints/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Lean 4
+/build/
+/lake-packages/
+lake-manifest.json
+*.olean
+
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.nav
+*.snm
+*.vrb
+
+# Output files
+out/
+*.pdf
+!Fundamental-Masses-Revised.pdf
+!Parameter-Free-Particle-Masses-from-the-Reality-Bridge.pdf
+
+# Data files (generated)
+out/csv/*.csv
+out/tex/*.tex
+out/figs/*.pdf
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Archives
+*.zip
+*.tar.gz
+*.tar
+
+# Temporary files
+tmp/
+temp/
+scratch/
+
+# Credentials (never commit)
+.env
+secrets/
+credentials/
